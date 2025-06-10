@@ -1,0 +1,53 @@
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+    }
+
+    .houer {
+      cursor: pointer;
+      margin-top: 0px;
+      background: rgb(255, 255, 255);
+      color: black;
+      margin-bottom: 12px;
+      border: 2px dashed #3333;
+      padding: 20px 20px;
+      border-radius: 35px;
+      text-align: center;
+      font-weight: 700;
+      box-shadow: 0 3px 10px rgba(122, 122, 122, 0.6);
+      user-select: none;
+      transition: all 0.3s ease;
+
+    }
+    /* Scrollbar ausblenden für alle Browser */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE und Edge */
+          scrollbar-width: none;     /* Firefox */
+        }
+    .houer:hover {
+      scale: 1.02;
+      background-color: white; 
+      color: black;
+      box-shadow: 0 6px 20px rgba(46, 46, 46, 0.9);
+    }
+
+  
+    @media (max-width: 640px) {
+      body {
+        padding: 20px 10px;
+      }
+      .schedule {
+        flex-direction: column;
+        padding: 20px;
+      }
+      .day-items {
+        min-width: auto;
+        width: 100%;
+      }
+    }

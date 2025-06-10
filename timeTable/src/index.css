@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+input, input:-webkit-autofill {
+  background-color: #e6fffa !important; /* oder ColorPalets.backgroundLight */
+  color: #1a202c !important;            /* oder ColorPalets.textPrimary */
+  -webkit-box-shadow: 0 0 0 1000px #e6fffa inset !important;
+  box-shadow: 0 0 0 1000px #e6fffa inset !important;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  
+  scrollbar-width: none;     
+}
