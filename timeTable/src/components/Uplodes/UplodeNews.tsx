@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
 import { collection, addDoc } from "firebase/firestore";
 import ColorPalets from "../ColorPalets";
-import { usePermissions } from "../scripts/permissions";
 import { setUserId } from "firebase/analytics";
 import DefaultButton from "../Buttons/Btn";
 
@@ -13,8 +12,6 @@ function ChangeNews() {
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
   const [isloading, setLoading] = useState(false);
-  const { role, name, loading } = usePermissions();
-
   const changeName = () => {
     setUserName(name ?? "");
 
@@ -54,13 +51,6 @@ function ChangeNews() {
     changeName();
   }, [])
 
-  if(loading){ 
-    changeName
-    return (
-    <p style={{ color: ColorPalets.textPrimary }}>Lade Daten...</p>) 
-    }
-
-    
     return (
       <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
         <h2 className="text-2xl font-bold text-slate-800 mb-4">

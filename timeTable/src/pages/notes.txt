@@ -1,0 +1,301 @@
+import React, { useEffect, useState } from "react";
+import "../demoIndex.css";
+import HouerSelection from "./HouerSelection";
+import ColorPalets from "./ColorPalets";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+
+// Typdefinitionen für die Datenstruktur
+type CourseData = {
+  description: string;
+  teacherId: string;
+  title: string;
+};
+
+type TimeTableData = {
+  [day: string]: {
+    [hour: string]: CourseData | null;
+  };
+};
+
+interface Props {
+  userId: string;
+  onClick: (dayName: string, hour: string) => void;
+  onSelectItem: (item: string | null) => void;
+}
+
+// Konstante für die Wochentage und Stunden
+const days = [
+  { name: "MONTAG", hours: ["Stunde 1", "Stunde 2", "Stunde 3", "Stunde 4", "Stunde 5", "Stunde 6", "Stunde 7", "Stunde 8"] },
+  { name: "DIENSTAG", hours: ["Stunde 1", "Stunde 2", "Stunde 3", "Stunde 4", "Stunde 5", "Stunde 6", "Stunde 7", "Stunde 8"] },
+  { name: "MITTWOCH", hours: ["Stunde 1", "Stunde 2", "Stunde 3", "Stunde 4", "Stunde 5", "Stunde 6", "Stunde 7", "Stunde 8"] },
+  { name: "DONNERSTAG", hours: ["Stunde 1", "Stunde 2", "Stunde 3", "Stunde 4", "Stunde 5", "Stunde 6", "Stunde 7", "Stunde 8"] },
+  { name: "FREITAG", hours: ["Stunde 1", "Stunde 2", "Stunde 3", "Stunde 4"] },
+];
+
+function Days({ userId, onClick, onSelectItem }: Props) {
+  // State Management
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedHour, setSelectedHour] = useState<string | null>(null);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [timetableData, setTimetableData] = useState<TimeTableData>({});
+
+  // Hilfsfunktion zur Formatierung der Kursinformationen
+  const formatCourseInfo = (dayName: string, hour: string) => {
+    const course = timetableData[dayName]?.[hour];
+    if (!course) return null;
+
+    return (
+      <>
+        <div className="font-bold">{course.title}</div>
+        <div>{course.description}</div>
+        <div className="italic">Lehrer-ID: {course.teacherId}</div>
+      </>
+    );
+  };
+
+  // Funktion zum Speichern von Kursdaten
+  const saveCourseData = async (day: string, hour: string, data: CourseData) => {
+    const db = getFirestore();
+    const docRef = doc(db, "timetables", userId);
+    
+    try {
+      await updateDoc(docRef, {
+        [`${day}.${hour}`]: data
+      });
+    } catch (error) {
+      console.error("Fehler beim Speichern der Kursdaten:", error);
+    }
+  };
+
+  // Event Listener für Responsive Design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileDevice(window.innerWidth < 768);
+    };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Daten aus Firebase laden
+  useEffect(() => {
+    async function fetchTimetable() {
+      if (!userId) return;
+      
+      try {
+        const db = getFirestore();
+        const docRef = doc(db, "timetables", userId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data() as TimeTableData;
+          setTimetableData(data);
+        } else {
+          setTimetableData({});
+        }
+      } catch (error) {
+        console.error("Fehler beim Laden des Stundenplans:", error);
+      }
+    }
+
+    fetchTimetable();
+  }, [userId]);
+
+  // Event Handler für Tag-Auswahl
+  const handleDayClick = (dayName: string) => {
+    if (selectedDay === dayName) {
+      setSelectedDay(null);
+      setSelectedHour(null);
+      onSelectItem(null);
+    } else {
+      setSelectedDay(dayName);
+      setSelectedHour(null);
+      onClick(dayName, "");
+    }
+  };
+
+  // Event Handler für Stunde-Auswahl
+  const handleHourClick = (dayName: string, hour: string) => {
+    setSelectedDay(dayName);
+    setSelectedHour(hour);
+    onClick(dayName, hour);
+    onSelectItem(hour);
+  };
+
+  // Styling-Konstanten
+  const bgColor = ColorPalets.primaryLighter;
+  const hoverBgColor = ColorPalets.primaryLight;
+  const boxShadowHover = "0px 0px 12px 0px rgba(71, 85, 105, 0.35)";
+
+  return (
+    <div>
+      {isMobileDevice ? (
+        <div
+          className={`schedule relative text-slate-800 grid-cols-1 min-w-100 ${
+            selectedDay ? "flex p-8 min-w-4xl max-h-200" : "grid p-8"
+          } gap-4 rounded-lg shadow-md items-start`}
+          style={{ backgroundColor: bgColor }}
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest(".houer-selection")) return;
+            setSelectedDay(null);
+            setSelectedHour(null);
+            onSelectItem(null);
+          }}
+        >
+          {days
+            .filter((day) => selectedDay === null || selectedDay === day.name)
+            .map((day) => (
+              <div
+                key={day.name}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDayClick(day.name);
+                }}
+                className={`day-items font-bold text-[1.1rem]  text-black select-none
+                  grid grid-cols-1 p-7 gap-4 rounded-lg shadow-[0px_0px_12px_0px_rgba(51,_65,_85,_0.30)]
+                  text-center transition-all duration-250 ease-in
+                  ${selectedDay ? "min-w-1/4 max-w-2/6 ml-36 " : ""}
+                  transition-[margin,box-shadow,background-color]`}
+                style={{ backgroundColor: bgColor, transitionProperty: "margin, box-shadow, background-color" }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.backgroundColor = hoverBgColor;
+                  el.style.boxShadow = boxShadowHover;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.backgroundColor = bgColor;
+                  el.style.boxShadow = "0px 0px 12px 0px rgba(51, 65, 85, 0.30)";
+                }}
+              >
+                <div>{day.name}</div>
+                <ul>
+                  {day.hours.map((hour, idx) => {
+                    const course = timetableData[day.name]?.[hour];
+                    return (
+                      <li
+                        key={idx}
+                        className="houer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHourClick(day.name, hour);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {hour} {course ? `- ${course.title}` : ""}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          {selectedDay && selectedHour && timetableData[selectedDay]?.[selectedHour] && (
+            <div className="houer-selection">
+              <HouerSelection
+                day={selectedDay}
+                hour={selectedHour}
+                data={timetableData[selectedDay][selectedHour]}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={`schedule relative text-slate-800 ${
+            selectedDay ? "flex p-8 min-w-4xl max-h-200" : "grid grid-cols-5 p-8"
+          } gap-4 rounded-lg shadow-md items-start`}
+          style={{ backgroundColor: bgColor }}
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest(".houer-selection")) return;
+            setSelectedDay(null);
+            setSelectedHour(null);
+            onSelectItem(null);
+          }}
+        >
+          {days
+            .filter((day) => selectedDay === null || selectedDay === day.name)
+            .map((day) => (
+              <div
+                key={day.name}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDayClick(day.name);
+                }}
+                className={`day-items font-bold text-[1.1rem] tracking-wider text-black select-none
+                  grid grid-cols-1 p-6 gap-4 rounded-lg shadow-[0px_0px_12px_0px_rgba(51,_65,_85,_0.30)]
+                  text-center transition-all duration-250 ease-in hover:cursor-pointer hover:-mt-2
+                  ${selectedDay ? "max-w-2xl min-w-1/4 max-w-50 hover:mt-0" : ""}
+                  transition-[margin,box-shadow,background-color] hover:duration-150 hover:ease-out`}
+                style={{ backgroundColor: bgColor, transitionProperty: "margin, box-shadow, background-color" }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.backgroundColor = hoverBgColor;
+                  el.style.boxShadow = boxShadowHover;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.backgroundColor = bgColor;
+                  el.style.boxShadow = "0px 0px 12px 0px rgba(51, 65, 85, 0.30)";
+                }}
+              >
+                <div>{day.name}</div>
+                <ul>
+                  {day.hours.map((hour, idx) => {
+                    const course = timetableData[day.name]?.[hour];
+                    return (
+                      <li
+                        key={idx}
+                        className="houer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHourClick(day.name, hour);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {hour} {course ? `- ${course.title}` : ""}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          {selectedDay && selectedHour && timetableData[selectedDay]?.[selectedHour] && (
+            <div className="houer-selection">
+              <HouerSelection
+                day={selectedDay}
+                hour={selectedHour}
+                data={timetableData[selectedDay][selectedHour]}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Days;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

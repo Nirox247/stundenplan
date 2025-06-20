@@ -1,4 +1,7 @@
-   import ColorPalets from "../ColorPalets";
+import ColorPalets from "../ColorPalets";
+import { doc, getDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+
 
 interface Props {
   name?: string;

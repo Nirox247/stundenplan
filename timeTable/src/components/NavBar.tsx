@@ -7,6 +7,7 @@ const NavBar = () => {
 
   const navLinks = [
     { name: "Home", href: "/home" },
+    { name: "Dashboard", href: "/dashboard" },
     { name: "Timetable", href: "/timetable" },
     { name: "DeleteNews", href: "/deleteNews" },
     { name: "Upload", href: "/upload" },
@@ -14,6 +15,7 @@ const NavBar = () => {
     { name: "Profile", href: "/profile" },
     { name: "Test", href: "/test" },
     { name: "UsersInfo", href: "/usersInfo" },
+    { name: "Courses", href: "/coursselection" },
   ];
 
   // Inline-Styles mit Farben aus ColorPalets

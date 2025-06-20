@@ -1,8 +1,11 @@
 {
   "dependencies": {
-    "firebase": "^11.9.0",
+    "@firebase/auth": "^1.10.7",
+    "firebase": "^11.9.1",
     "firebase-functions": "^6.3.2",
     "framer-motion": "^12.15.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "motion": "^12.15.0"
   },
   "name": "timetable",

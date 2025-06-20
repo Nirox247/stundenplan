@@ -1,12 +1,8 @@
-import { getFirestore } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, collection, getDocs } from "firebase/firestore"; // ✅ alles aus firestore
 import { getAuth } from "firebase/auth";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAnalytics } from "firebase/analytics";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA7drnM8-cB5eJZWyXDXbjcCTSeSOqhVuQ",
   authDomain: "fsg-stundenplan.firebaseapp.com",
@@ -14,15 +10,24 @@ const firebaseConfig = {
   storageBucket: "fsg-stundenplan.firebasestorage.app",
   messagingSenderId: "243965097168",
   appId: "1:243965097168:web:28288253ae8f55b751dad5",
-  measurementId: "G-9FBQNL8R6C"
+  measurementId: "G-9FBQNL8R6C",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const firestore = getFirestore(app);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
 const db = getFirestore(app);
 const auth = getAuth(app);
+const analytics = getAnalytics(app);
+
+export const getUsersFromFirestore = async () => {
+  const usersCollectionRef = collection(db, "users");
+  const snapshot = await getDocs(usersCollectionRef);
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+};
 
 
-export { app, auth, db, analytics, firestore };
+export { app, analytics, db, auth };

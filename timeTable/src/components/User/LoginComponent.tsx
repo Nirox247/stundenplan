@@ -4,59 +4,71 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  ProviderId,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";  // neu
+import { updateProfile } from "firebase/auth";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
 import ColorPalets from "../ColorPalets";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
- 
+
 function LoginComponent() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState<string>("");
   const [isError, setIsError] = useState(false);
+  const [ipapiData, setIpapiData] = useState<any>({});
+  const [ipifyData, setIpifyData] = useState<any>({});
 
   const auth = getAuth();
-  const db = getFirestore();  // neu
+  const db = getFirestore();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchIPs = async () => {
+      const [ipapi, ipify] = await Promise.all([
+        fetch("https://ipapi.co/json/").then((res) => res.json()).catch(() => ({})),
+        fetch("https://api.ipify.org?format=json").then((res) => res.json()).catch(() => ({})),
+      ]);
+      setIpapiData(ipapi);
+      setIpifyData(ipify);
+    };
+    fetchIPs();
+  }, []);
 
-   
-    const [ipapiData, setIpapiData] = useState<any>({});
-    const [ipifyData, setIpifyData] = useState<any>({});
-    useEffect(() => {
-      const fetchIPs = async () => {
-        const [ipapi, ipify] = await Promise.all([
-          fetch("https://ipapi.co/json/").then(res => res.json()).catch(() => ({})),
-          fetch("https://api.ipify.org?format=json").then(res => res.json()).catch(() => ({})),
-        ]);
-        setIpapiData(ipapi);
-        setIpifyData(ipify);
-      };
-      fetchIPs();
-    }, []);
-
-   
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        name: user.displayName || name,
-        role: "user",
-        Info: {
-          ip: ipifyData.ip,
-          city: ipapiData.city,
-          region: ipapiData.region,
-          country: ipapiData.country_name,
-        },
-      });
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          userId: user.uid,
+          role: "admin",
+          name: user.displayName || name || "Unbekannt",
+          Info: {
+            /*ip: ipifyData.ip,
+            city: ipapiData.city,
+            region: ipapiData.region,*/
+            country: ipapiData.country_name,
+          },
+        });
+      }
+
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Fehler beim Login");
     } finally {
@@ -80,24 +92,26 @@ function LoginComponent() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Firestore-Dokument mit Rolle und Name anlegen (Standardrolle: user)
-              await setDoc(doc(db, "users", user.uid), {
+      await updateProfile(user, {
+        displayName: name,
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        
         email,
         name,
-        role: "user",
+        userId: user.uid,
+        role: "admin",
         Info: {
-          ip: ipifyData.ip,
+          /*ip: ipifyData.ip,
           ipv6: ipapiData.ip,
           city: ipapiData.city,
-          region: ipapiData.region,
+          region: ipapiData.region,*/
           country: ipapiData.country_name,
         },
       });
 
-
       setName("");
-      setEmail("");
-      setPassword("");
       setError("Account erfolgreich erstellt!");
     } catch (e: any) {
       setError(e.message || "Fehler bei der Registrierung.");
@@ -118,7 +132,27 @@ function LoginComponent() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          name: name || "Unbekannt",
+          role: "admin",
+          Info: {
+            ip: ipifyData.ip,
+            ipv6: ipapiData.ip,
+            city: ipapiData.city,
+            region: ipapiData.region,
+            country: ipapiData.country_name,
+          },
+        });
+      }
+
       navigate("/dashboard");
     } catch (e: any) {
       setError(e.message || "Fehler beim Login.");
@@ -128,24 +162,20 @@ function LoginComponent() {
   };
 
   return (
-    console.log(ipapiData, ipifyData),
     <div
       className="flex flex-col items-center justify-center p-8 rounded-lg shadow-xl max-w-sm mx-auto my-12"
-      style={{ backgroundColor: ColorPalets.primaryLight}}
+      style={{ backgroundColor: ColorPalets.primaryLight }}
     >
-      <h2
-        className="text-2xl font-semibold mb-6"
-        style={{ color: ColorPalets.textPrimary }}
-      >
+      <h2 className="text-2xl font-semibold mb-6" style={{ color: ColorPalets.textPrimary }}>
         Willkommen zurück!
       </h2>
 
       <button
         onClick={handleGoogleLogin}
-        className={`w-full py-3 px-4 rounded-full font-bold shadow-md transition-all duration-300 flex items-center justify-center gap-2 ${
+        disabled={isLoading}
+        className={`w-full py-3 px-4 rounded-full font-bold shadow-md flex items-center justify-center gap-2 ${
           isLoading ? "opacity-70 cursor-not-allowed" : ""
         }`}
-        disabled={isLoading}
         style={{
           backgroundColor: ColorPalets.primaryLighter,
           color: ColorPalets.textPrimary,
@@ -160,37 +190,23 @@ function LoginComponent() {
       </button>
 
       {error && (
-        <div
-          style={{ color: ColorPalets.danger }}
-          className="text-sm mt-4 text-center"
-        >
+        <div className="text-sm mt-4 text-center" style={{ color: ColorPalets.danger }}>
           {error}
         </div>
       )}
 
       <div className="relative w-full my-8">
         <div className="absolute inset-0 flex items-center">
-          <div
-            className="w-full border-t opacity-20"
-            style={{ borderColor: ColorPalets.textPrimary }}
-          ></div>
+          <div className="w-full border-t opacity-20" style={{ borderColor: ColorPalets.textPrimary }}></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span
-            className="px-3 pt-10"
-            style={{
-              color: ColorPalets.textPrimary,
-            }}
-          >
+          <span className="px-3 pt-10" style={{ color: ColorPalets.textPrimary }}>
             Oder mit E-Mail
           </span>
         </div>
       </div>
 
-      <p
-        className="text-lg mb-4 font-medium"
-        style={{ color: ColorPalets.textPrimary }}
-      >
+      <p className="text-lg mb-4 font-medium" style={{ color: ColorPalets.textPrimary }}>
         Neuen Account erstellen
       </p>
 
@@ -233,6 +249,7 @@ function LoginComponent() {
           outlineColor: ColorPalets.primary,
         }}
       />
+
       <button
         onClick={CreateUserAccount}
         disabled={isLoading}
@@ -249,18 +266,10 @@ function LoginComponent() {
 
       <div className="relative w-full my-8">
         <div className="absolute inset-0 flex items-center">
-          <div
-            className="w-full border-t opacity-20"
-            style={{ borderColor: ColorPalets.textPrimary }}
-          ></div>
+          <div className="w-full border-t opacity-20" style={{ borderColor: ColorPalets.textPrimary }}></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span
-            className="pt-10 px-3"
-            style={{
-              color: ColorPalets.textPrimary,
-            }}
-          >
+          <span className="pt-10 px-3" style={{ color: ColorPalets.textPrimary }}>
             Schon registriert?
           </span>
         </div>
@@ -281,10 +290,7 @@ function LoginComponent() {
       </button>
 
       {isError && !error && (
-        <div
-          className="text-sm mt-4 text-center"
-          style={{ color: ColorPalets.danger }}
-        >
+        <div className="text-sm mt-4 text-center" style={{ color: ColorPalets.danger }}>
           Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.
         </div>
       )}

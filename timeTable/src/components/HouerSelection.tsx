@@ -1,70 +1,78 @@
-import Courses from "../data/CoursesData";
-import ColorPalets from "./ColorPalets";
+// HouerSelection.tsx
+import React from "react"; // No useState or useEffect needed if purely display
 
-//wird noch geändert grade nur test weise
-//auf eine datenbank
+type CourseData = {
+  title: string;
+  name?: string;
+  description?: string;
+  teacherId: string;
+  subject?: string | null;
+  duration?: number | null;
+  start?: number | null;
+};
 
-function HouerSelection() {
-  return(
-    <div className="flex flex-col items-center rounded-lg shadow-lg overflow-auto max-h-[80vh]">
-      <div
-        className="flex flex-col items-center scrollbar-hide"
-        style={{
-          background: ColorPalets.primaryLight,
-          color: ColorPalets.textPrimary,
-          borderRadius: "0.5rem",
-          boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
-          overflowY: "auto",
-          maxHeight: "80vh"
-        }}
-      >
-        {Courses.map((hourCourses, hourIdx) => {
-          const houerCounter = `Stunde ${hourIdx + 1}`;
-          return (
-            <div key={hourIdx} className="mb-6">
-              <div
-                className="text-center font-bold text-lg mb-2"
-                style={{
-                  background: ColorPalets.primaryLight,
-                  color: ColorPalets.textPrimary
-                }}
-              >
-                --- {houerCounter} ---
-              </div>
-              <div
-                className="grid grid-cols-3 gap-4 rounded-lg p-4 shadow"
-                style={{
-                  background: ColorPalets.primaryLight,
-                  color: ColorPalets.textPrimary,
-                  borderRadius: "0.5rem",
-                  boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
-                }}
-              >
-                {hourCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className={`
-                      p-3 rounded-lg mb-4 
-                      shadow-md hover:shadow-xl
-                      hover:cursor-pointer duration-75 ease-in-out transition-all
-                      hover:scale-110
-                      hover:shadow-lg transition-shadow duration-200 ease-in-out
-                      ${course.color}
-                    `}
-                  >
-                    <h3 className="font-bold">{course.name}</h3>
-                    <p>{course.info}</p>
-                    <p>Lehrer: {course.teacher}</p>
-                    <p>Maximale Teilnehmer: {course.maxMembers}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+interface HouerSelectionProps {
+  day: string;
+  hour: string;
+  data: CourseData | null;
+  // Removed onSave prop
+}
+
+const HouerSelection: React.FC<HouerSelectionProps> = ({ day, hour, data }) => {
+  if (!data) {
+    return (
+      <div className="p-4 border rounded shadow-lg bg-white text-center">
+        <h4>{day}, {hour}</h4>
+        <p className="text-gray-600">Freistunde</p>
+        <p className="text-sm text-gray-500 mt-2">Wähle einen Kurs in der Kursauswahl, um diesen Slot zu belegen.</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="p-4 border rounded shadow-lg bg-white">
+      <h4>Details für {day}, {hour}</h4>
+      <div className="mb-2">
+        <label className="block text-sm font-medium text-gray-700">Titel:</label>
+        <p className="mt-1 text-lg font-semibold text-gray-900">{data.title}</p>
+      </div>
+      {data.description && (
+        <div className="mb-2">
+          <label className="block text-sm font-medium text-gray-700">Beschreibung:</label>
+          <p className="mt-1 text-gray-800">{data.description}</p>
+        </div>
+      )}
+      <div className="mb-2">
+        <label className="block text-sm font-medium text-gray-700">Lehrer-ID:</label>
+        <p className="mt-1 text-gray-800">{data.teacherId}</p>
+      </div>
+      {data.subject && (
+        <div className="mb-2">
+          <label className="block text-sm font-medium text-gray-700">Fach:</label>
+          <p className="mt-1 text-gray-800">{data.subject}</p>
+        </div>
+      )}
+      {data.duration && (
+        <div className="mb-2">
+          <label className="block text-sm font-medium text-gray-700">Dauer:</label>
+          <p className="mt-1 text-gray-800">{data.duration} Minuten</p>
+        </div>
+      )}
+      {data.start && (
+        <div className="mb-2">
+          <label className="block text-sm font-medium text-gray-700">Stunde:</label>
+          <p className="mt-1 text-gray-800">{data.start}. Stunde</p>
+        </div>
+      )}
+      {/* If 'name' is distinct from 'description' and you want to display it */}
+      {data.name && data.name !== data.description && (
+        <div className="mb-2">
+          <label className="block text-sm font-medium text-gray-700">Name:</label>
+          <p className="mt-1 text-gray-800">{data.name}</p>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default HouerSelection;
