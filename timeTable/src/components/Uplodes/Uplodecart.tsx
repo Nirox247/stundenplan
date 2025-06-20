@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import ColorPalets from '../ColorPalets';
 import InputField from '../InputFields/InputField';
 import DefaultButton from "../Buttons/Btn";
-import { usePermissions } from '../scripts/permissions';
 
 interface CardProps {
     headline: string,
@@ -22,17 +21,6 @@ interface CardProps {
 }
 function uplodeCard(props: CardProps) {
     const [activeTab, setActiveTab] = useState<"news" | "courses">("news");
-    const { role, name, loading } = usePermissions();
-
-    if (loading) {
-        return <div>Lade Berechtigungen...</div>;
-    }
-    if (role !== "admin") {
-        return (
-            <h1>kein admin</h1> 
-        );
-    }
-    
 
     return (
         <div className={`card max-w-xl mx-auto mt-10 p-6 rounded-xl shadow-md ${props.className || ""}`}
