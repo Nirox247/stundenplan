@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Check, Menu, X } from "lucide-react";
 import ColorPalets from "./ColorPalets";
+import { Link } from "react-router-dom"; // <-- importieren
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);
@@ -18,14 +19,9 @@ const NavBar = () => {
     { name: "Courses", href: "/coursselection" },
   ];
 
-  // Inline-Styles mit Farben aus ColorPalets
   const buttonStyle = {
     background: `linear-gradient(to top right, ${ColorPalets.accentLight}, ${ColorPalets.success})`,
     color: "white",
-  };
-
-  const hoverButtonStyle = {
-    backgroundColor: ColorPalets.primaryDark,
   };
 
   return (
@@ -55,24 +51,23 @@ const NavBar = () => {
         >
           <nav className="flex flex-col space-y-4 text-left">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.href}
-                onClick={() => setOpen(false)}
+                to={link.href}                  // <-- Link statt <a href>
+                onClick={() => setOpen(false)}  // Menü schließen beim Klick
                 className="text-lg font-semibold px-4 py-2 rounded-lg transition"
                 style={{ color: ColorPalets.primaryDark }}
-                onMouseEnter={(e) => (
-                  (e.currentTarget.style.background = `linear-gradient(to right,
-                     ${ColorPalets.accentLight}, ${ColorPalets.accent})`),
-                  (e.currentTarget.style.color = ColorPalets.success)
-                )}
-                onMouseLeave={(e) => (
-                  (e.currentTarget.style.background = "transparent"),
-                  (e.currentTarget.style.color = ColorPalets.primaryDark)
-                )}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = `linear-gradient(to right, ${ColorPalets.accentLight}, ${ColorPalets.accent})`;
+                  e.currentTarget.style.color = ColorPalets.success;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = ColorPalets.primaryDark;
+                }}
               >
                 {link.name}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
