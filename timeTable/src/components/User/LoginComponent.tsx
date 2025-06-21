@@ -57,7 +57,7 @@ function LoginComponent() {
         await setDoc(userRef, {
           email: user.email,
           userId: user.uid,
-          role: "admin",
+          role: "user",
           name: user.displayName || name || "Unbekannt",
           Info: {
             /*ip: ipifyData.ip,
